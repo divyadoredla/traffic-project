@@ -1,0 +1,22 @@
+name: "traffic-signal-control"
+version: "1.0.0"
+description: "Incident-resilient traffic signal control using reinforcement learning"
+author: "Meta Hackathon Team"
+tags: ["traffic", "reinforcement-learning", "resilience", "openenv"]
+tasks:
+  - name: "basic_intersection"
+    difficulty: "easy"
+    description: "Control a single intersection with minimal disruptions"
+  - name: "multi_intersection"
+    difficulty: "medium" 
+    description: "Manage multiple intersections with moderate disruptions"
+  - name: "city_network"
+    difficulty: "hard"
+    description: "Control city-wide traffic network with severe disruptions"
+observation_space:
+  type: "dict"
+  description: "Traffic state including vehicle counts, signal phases, and disruption indicators"
+action_space:
+  type: "discrete"
+  description: "Signal phase selection for each intersection"
+reward_range: [-1.0, 1.0]

@@ -1,0 +1,5 @@
+openenv>=0.1.0
+pydantic>=2.0.0
+numpy>=1.21.0
+openai>=1.0.0
+gymnasium>=0.28.0
