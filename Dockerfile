@@ -16,7 +16,5 @@ COPY README.md .
 ENV API_BASE_URL="https://api.openai.com/v1"
 ENV MODEL_NAME="gpt-4.1-mini"
 
-# Expose port for Hugging Face Spaces
-EXPOSE 7860
 
 CMD ["python", "inference.py"]
