@@ -8,3 +8,6 @@ def home():
 
 def main():
     return app
+
+if __name__ == "__main__":
+    main()
