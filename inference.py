@@ -146,15 +146,19 @@ def run_task(task: str) -> dict:
     return {"task": task, "score": final_score, "steps": step, "success": success}
 
 
-if __name__ == "__main__":
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
     results = []
     for task in TASKS:
         result = run_task(task)
         results.append(result)
 
-    # Summary
     avg_score = sum(r["score"] for r in results) / len(results)
-    print(f"\nBaseline Results:")
-    for r in results:
-        print(f"  {r['task']}: score={r['score']:.3f} success={r['success']}")
-    print(f"  Average score: {avg_score:.3f}")
+    return f"Traffic Model Running 🚀 Avg Score: {avg_score:.3f}"
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=7860)
