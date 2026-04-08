@@ -12,3 +12,6 @@ dependencies = [
     "gymnasium",
     "openenv"
 ]
+
+[project.scripts]
+server = "server.app:app"
