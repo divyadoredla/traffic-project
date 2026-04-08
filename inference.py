@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 from openai import OpenAI
 from traffic_env import TrafficSignalEnv, DisruptionWrapper
@@ -96,6 +97,9 @@ def parse_action(response_text: str, signal_phases: dict) -> dict:
 
 def run_task(task: str) -> dict:
     """Run a single task episode and return results"""
+    # Print START immediately — before any env setup
+    print(f"START: task={task} env=traffic-signal-control model={MODEL_NAME}", flush=True)
+
     env = TrafficSignalEnv(task=task, max_steps=MAX_STEPS)
     wrapped_env = DisruptionWrapper(env)
     grader = get_grader(task)
@@ -107,8 +111,6 @@ def run_task(task: str) -> dict:
     last_error = None
     done = False
     step = 0
-
-    print(f"START: task={task} env=traffic-signal-control model={MODEL_NAME}")
 
     while not done and step < MAX_STEPS:
         step += 1
@@ -137,10 +139,7 @@ def run_task(task: str) -> dict:
 
         error_str = last_error if last_error else "null"
         action_str = json.dumps(action)
-        print(
-            f"STEP: step={step} action={action_str} "
-            f"reward={reward.value:.2f} done={str(done).lower()} error={error_str}"
-        )
+        print(f"STEP: step={step} action={action_str} reward={reward.value:.2f} done={str(done).lower()} error={error_str}", flush=True)
 
     wrapped_env.close()
 
@@ -148,7 +147,7 @@ def run_task(task: str) -> dict:
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
     success = final_score >= 0.5
 
-    print(f"END: success={str(success).lower()} steps={step} rewards={rewards_str}")
+    print(f"END: success={str(success).lower()} steps={step} rewards={rewards_str}", flush=True)
 
     return {"task": task, "score": final_score, "steps": step, "success": success}
 
