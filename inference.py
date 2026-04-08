@@ -98,7 +98,7 @@ def parse_action(response_text: str, signal_phases: dict) -> dict:
 def run_task(task: str) -> dict:
     """Run a single task episode and return results"""
     # Print START immediately — before any env setup
-    print(f"START: task={task} env=traffic-signal-control model={MODEL_NAME}", flush=True)
+    print(f"START: {task}", flush=True)
 
     env = TrafficSignalEnv(task=task, max_steps=MAX_STEPS)
     wrapped_env = DisruptionWrapper(env)
