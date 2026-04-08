@@ -137,9 +137,7 @@ def run_task(task: str) -> dict:
         grader.add_step(reward, info)
         rewards.append(reward.value)
 
-        error_str = last_error if last_error else "null"
-        action_str = json.dumps(action)
-        print(f"STEP: step={step} action={action_str} reward={reward.value:.2f} done={str(done).lower()} error={error_str}", flush=True)
+        print(f"STEP: step={step} reward={reward.value:.2f}", flush=True)
 
     wrapped_env.close()
 
