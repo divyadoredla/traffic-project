@@ -151,5 +151,9 @@ def run_task(task: str) -> dict:
 
 
 if __name__ == "__main__":
+    import time
     for task in TASKS:
         run_task(task)
+    # Keep container alive for OpenEnv
+    while True:
+        time.sleep(60)
