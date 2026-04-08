@@ -15,7 +15,7 @@ if HF_TOKEN is None:
 client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
 
 TASKS = ["basic_intersection", "multi_intersection", "city_network"]
-MAX_STEPS = 100  # Increased from 50 for better performance
+MAX_STEPS = 30  # Increased from 50 for better performance
 
 
 def obs_to_prompt(obs, task: str, step: int) -> str:
