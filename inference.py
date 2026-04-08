@@ -10,9 +10,14 @@ MODEL_NAME = os.getenv("MODEL_NAME")
 HF_TOKEN = os.getenv("HF_TOKEN")
 
 if HF_TOKEN is None:
-    raise ValueError("HF_TOKEN environment variable is required")
+    print("WARNING: No API key, running in fallback mode")
 
-client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
+client = None
+if HF_TOKEN:
+    try:
+        client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
+    except Exception:
+        client = None
 
 TASKS = ["basic_intersection", "multi_intersection", "city_network"]
 MAX_STEPS = 30  # Increased from 50 for better performance
@@ -109,20 +114,22 @@ def run_task(task: str) -> dict:
         step += 1
         prompt = obs_to_prompt(obs, task, step)
 
-        try:
-            response = client.chat.completions.create(
-                model=MODEL_NAME,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.4,
-                max_tokens=300
-            )
-            action_text = response.choices[0].message.content
-            action = parse_action(action_text, obs.signal_phases)
-            last_error = None
-        except Exception as e:
-            # Fallback to phase 0 for all intersections on API error
+        if client is not None:
+            try:
+                response = client.chat.completions.create(
+                    model=MODEL_NAME,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.4,
+                    max_tokens=150
+                )
+                action_text = response.choices[0].message.content
+                action = parse_action(action_text, obs.signal_phases)
+                last_error = None
+            except Exception as e:
+                action = {k: 0 for k in obs.signal_phases}
+                last_error = str(e)[:100]
+        else:
             action = {k: 0 for k in obs.signal_phases}
-            last_error = str(e)[:100]
 
         obs, reward, done, info = wrapped_env.step(action)
         grader.add_step(reward, info)
