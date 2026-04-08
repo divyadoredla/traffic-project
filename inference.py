@@ -103,7 +103,7 @@ def run_task(task: str) -> dict:
     done = False
     step = 0
 
-    print(f"[START] task={task} env=traffic-signal-control model={MODEL_NAME}")
+    print(f"START: task={task} env=traffic-signal-control model={MODEL_NAME}")
 
     while not done and step < MAX_STEPS:
         step += 1
@@ -131,7 +131,7 @@ def run_task(task: str) -> dict:
         error_str = last_error if last_error else "null"
         action_str = json.dumps(action)
         print(
-            f"[STEP]  step={step} action={action_str} "
+            f"STEP: step={step} action={action_str} "
             f"reward={reward.value:.2f} done={str(done).lower()} error={error_str}"
         )
 
@@ -141,7 +141,7 @@ def run_task(task: str) -> dict:
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
     success = final_score >= 0.5
 
-    print(f"[END]   success={str(success).lower()} steps={step} rewards={rewards_str}")
+    print(f"END: success={str(success).lower()} steps={step} rewards={rewards_str}")
 
     return {"task": task, "score": final_score, "steps": step, "success": success}
 
