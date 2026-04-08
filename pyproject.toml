@@ -1,0 +1,14 @@
+[project]
+name = "traffic-project"
+version = "0.1.0"
+description = "Traffic signal control using OpenEnv"
+requires-python = ">=3.10"
+
+dependencies = [
+    "numpy",
+    "openai",
+    "fastapi",
+    "uvicorn",
+    "gymnasium",
+    "openenv"
+]
