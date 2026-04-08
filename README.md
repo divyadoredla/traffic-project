@@ -1,3 +1,12 @@
+---
+title: Traffic Signal Control
+emoji: 🚦
+colorFrom: green
+colorTo: blue
+sdk: docker
+pinned: false
+---
+
 # Incident-Resilient Traffic Signal Control
 ### Reinforcement Learning with Mid-Episode Disruption Injection
 
