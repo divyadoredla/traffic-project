@@ -15,7 +15,7 @@ if HF_TOKEN is None:
 client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
 
 TASKS = ["basic_intersection", "multi_intersection", "city_network"]
-MAX_STEPS = 50
+MAX_STEPS = 100  # Increased from 50 for better performance
 
 
 def obs_to_prompt(obs, task: str, step: int) -> str:
@@ -29,34 +29,45 @@ def obs_to_prompt(obs, task: str, step: int) -> str:
     active_disruptions = [lane for lane, blocked in disruptions.items() if blocked]
     num_intersections = len(signal_phases)
 
-    prompt = f"""You are a traffic signal controller. Your goal is to minimize vehicle waiting times and maximize throughput.
+    # Calculate priority scores for better decision making
+    lane_priorities = {}
+    for lane_id in vehicle_counts.keys():
+        if lane_id in waiting_times and lane_id in disruptions:
+            # Higher priority = more vehicles + longer wait + disruption penalty
+            priority = vehicle_counts[lane_id] * (1 + waiting_times[lane_id] / 100)
+            if disruptions[lane_id]:
+                priority *= 0.1  # Heavily deprioritize blocked lanes
+            lane_priorities[lane_id] = round(priority, 2)
+    
+    # Get top priority lanes
+    top_lanes = sorted(lane_priorities.items(), key=lambda x: x[1], reverse=True)[:6]
+    
+    prompt = f"""You are an expert traffic signal controller optimizing for minimal waiting times and maximum throughput.
 
-Task: {task}
-Step: {step}
-Current throughput: {throughput:.2f} (higher is better)
+CURRENT SITUATION:
+- Task: {task} | Step: {step}/50
+- Throughput: {throughput:.2f} (Target: >0.75)
+- Active Disruptions: {len(active_disruptions)} lanes blocked
 
-Signal phases (0-3 available per intersection):
+CRITICAL LANES (highest priority):
+{json.dumps(dict(top_lanes), indent=2)}
+
+CURRENT SIGNAL PHASES:
 {json.dumps(signal_phases, indent=2)}
 
-Vehicle counts per lane (vehicles waiting):
-{json.dumps({k: v for k, v in list(vehicle_counts.items())[:8]}, indent=2)}
+STRATEGY:
+1. Prioritize lanes with highest priority scores (vehicles × waiting time)
+2. Alternate phases every 3-5 steps to prevent starvation
+3. AVOID blocked lanes - they have 0.1x priority
+4. Balance north-south (phases 0,2) vs east-west (phases 1,3)
+5. If throughput < 0.6, switch phases more frequently
 
-Average waiting times per lane (seconds):
-{json.dumps({k: round(v, 1) for k, v in list(waiting_times.items())[:8]}, indent=2)}
+BLOCKED LANES: {active_disruptions if active_disruptions else "None - all clear!"}
 
-Active disruptions (blocked lanes): {active_disruptions if active_disruptions else "None"}
-
-Instructions:
-- Choose a signal phase (0, 1, 2, or 3) for each intersection
-- Phase 0/2: Allow north-south traffic flow
-- Phase 1/3: Allow east-west traffic flow
-- Prioritize lanes with high vehicle counts and long waiting times
-- If a lane is blocked, route traffic around it
-
-Respond with ONLY a JSON object like:
+Respond with ONLY a JSON object:
 {{"intersection_0": 1, "intersection_1": 0, "intersection_2": 2}}
 
-Only include intersections that exist (you have {num_intersections} intersection(s): {list(signal_phases.keys())})
+Available intersections: {list(signal_phases.keys())}
 """
     return prompt
 
@@ -102,8 +113,8 @@ def run_task(task: str) -> dict:
             response = client.chat.completions.create(
                 model=MODEL_NAME,
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.2,
-                max_tokens=200
+                temperature=0.4,  # Increased for better exploration
+                max_tokens=300
             )
             action_text = response.choices[0].message.content
             action = parse_action(action_text, obs.signal_phases)
@@ -147,32 +158,3 @@ if __name__ == "__main__":
     for r in results:
         print(f"  {r['task']}: score={r['score']:.3f} success={r['success']}")
     print(f"  Average score: {avg_score:.3f}")
-
-
-from flask import Flask
-
-app = Flask(__name__)
-
-@app.route("/")
-def home():
-    print("START: Traffic Signal Control")
-
-    results = []
-    for task in TASKS:
-        result = run_task(task)
-        results.append(result)
-
-    avg_score = sum(r["score"] for r in results) / len(results)
-
-    print("\nBaseline Results:")
-    for r in results:
-        print(f"{r['task']}: score={r['score']:.3f} success={r['success']}")
-
-    print(f"Average score: {avg_score:.3f}")
-    print("END: Completed")
-
-    return f"Traffic Model Running 🚀 Avg Score: {avg_score:.3f}"
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=7860)

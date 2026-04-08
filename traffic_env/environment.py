@@ -196,10 +196,19 @@ class TrafficSignalEnv:
         
         # Disruption handling component
         active_disruptions = sum(self.disruptions.values())
-        disruption_penalty = -0.1 * active_disruptions
+        disruption_penalty = -0.15 * active_disruptions
         
-        # Combine components
-        total_reward = 0.4 * throughput_reward + 0.4 * waiting_reward + disruption_penalty
+        # Efficiency bonus (reward consistent high throughput)
+        if throughput_reward > 0.7:
+            efficiency_bonus = 0.1
+        else:
+            efficiency_bonus = 0.0
+        
+        # Combine components with adjusted weights
+        total_reward = (0.45 * throughput_reward + 
+                       0.35 * waiting_reward + 
+                       disruption_penalty + 
+                       efficiency_bonus)
         total_reward = np.clip(total_reward, -1.0, 1.0)
         
         return TrafficReward(
@@ -207,7 +216,8 @@ class TrafficSignalEnv:
             components={
                 "throughput": throughput_reward,
                 "waiting_time": waiting_reward,
-                "disruption_penalty": disruption_penalty
+                "disruption_penalty": disruption_penalty,
+                "efficiency_bonus": efficiency_bonus
             }
         )
     
