@@ -113,7 +113,7 @@ def run_task(task: str) -> dict:
             response = client.chat.completions.create(
                 model=MODEL_NAME,
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.4,  # Increased for better exploration
+                temperature=0.4,
                 max_tokens=300
             )
             action_text = response.choices[0].message.content

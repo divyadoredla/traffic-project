@@ -69,7 +69,7 @@ class TrafficSignalEnv:
         
         # Action and observation spaces
         self.action_space = spaces.Dict({
-            f"intersection_{i}": spaces.Discrete(4)  # 4 signal phases
+            f"intersection_{i}": spaces.Discrete(4)
             for i in range(self.num_intersections)
         })
         
@@ -101,7 +101,6 @@ class TrafficSignalEnv:
         """Reset environment to initial state"""
         self.current_step = 0
         
-        # Initialize vehicle counts
         for i in range(self.num_intersections):
             for j in range(self.num_lanes_per_intersection):
                 lane_id = f"intersection_{i}_lane_{j}"
@@ -109,11 +108,10 @@ class TrafficSignalEnv:
                 self.waiting_times[lane_id] = np.random.uniform(0, 10)
                 self.disruptions[lane_id] = False
                 
-        # Initialize signal phases
         for i in range(self.num_intersections):
             self.signal_phases[f"intersection_{i}"] = 0
             
-        self.throughput_history = [0.5]  # Start with moderate throughput
+        self.throughput_history = [0.5]
         
         return self._get_observation()
     
@@ -121,21 +119,14 @@ class TrafficSignalEnv:
         """Execute one environment step"""
         self.current_step += 1
         
-        # Update signal phases based on action
         for intersection_id, phase in action.items():
             if intersection_id in self.signal_phases:
                 self.signal_phases[intersection_id] = phase
         
-        # Simulate traffic dynamics
         self._simulate_traffic()
-        
-        # Calculate reward
         reward = self._calculate_reward()
-        
-        # Check if episode is done
         done = self.current_step >= self.max_steps
         
-        # Additional info
         info = {
             "step": self.current_step,
             "active_disruptions": sum(self.disruptions.values()),
@@ -146,8 +137,6 @@ class TrafficSignalEnv:
         return self._get_observation(), reward, done, info
     
     def _simulate_traffic(self):
-        """Simulate traffic flow and disruptions"""
-        # Update vehicle counts based on signal phases
         for i in range(self.num_intersections):
             intersection_id = f"intersection_{i}"
             current_phase = self.signal_phases[intersection_id]
@@ -155,56 +144,43 @@ class TrafficSignalEnv:
             for j in range(self.num_lanes_per_intersection):
                 lane_id = f"intersection_{i}_lane_{j}"
                 
-                # Traffic flow based on signal phase and disruptions
                 if not self.disruptions[lane_id]:
-                    if j % 2 == current_phase % 2:  # Green light for this direction
-                        # Vehicles can pass through
+                    if j % 2 == current_phase % 2:
                         vehicles_passed = min(self.vehicle_counts[lane_id], 
                                             np.random.randint(3, 8))
                         self.vehicle_counts[lane_id] -= vehicles_passed
-                        self.waiting_times[lane_id] *= 0.8  # Reduce waiting time
+                        self.waiting_times[lane_id] *= 0.8
                     else:
-                        # Red light - vehicles accumulate
                         self.waiting_times[lane_id] += 1.0
                 else:
-                    # Lane blocked - severe congestion
                     self.waiting_times[lane_id] += 2.0
                 
-                # New vehicles arrive
                 new_vehicles = np.random.poisson(2)
                 self.vehicle_counts[lane_id] += new_vehicles
                 self.vehicle_counts[lane_id] = min(self.vehicle_counts[lane_id], 100)
         
-        # Calculate throughput
         total_vehicles = sum(self.vehicle_counts.values())
         max_vehicles = self.num_intersections * self.num_lanes_per_intersection * 100
         current_throughput = 1.0 - (total_vehicles / max_vehicles)
         self.throughput_history.append(current_throughput)
         
-        # Keep only recent history
         if len(self.throughput_history) > 10:
             self.throughput_history.pop(0)
     
     def _calculate_reward(self) -> TrafficReward:
-        """Calculate reward based on traffic performance"""
-        # Throughput component (higher is better)
         throughput_reward = np.mean(self.throughput_history)
         
-        # Waiting time component (lower is better)
         avg_waiting = np.mean(list(self.waiting_times.values()))
         waiting_reward = max(0, 1.0 - avg_waiting / 100.0)
         
-        # Disruption handling component
         active_disruptions = sum(self.disruptions.values())
         disruption_penalty = -0.15 * active_disruptions
         
-        # Efficiency bonus (reward consistent high throughput)
         if throughput_reward > 0.7:
             efficiency_bonus = 0.1
         else:
             efficiency_bonus = 0.0
         
-        # Combine components with adjusted weights
         total_reward = (0.45 * throughput_reward + 
                        0.35 * waiting_reward + 
                        disruption_penalty + 
@@ -222,7 +198,6 @@ class TrafficSignalEnv:
         )
     
     def _get_observation(self) -> TrafficObservation:
-        """Get current observation"""
         return TrafficObservation(
             vehicle_counts=self.vehicle_counts.copy(),
             signal_phases=self.signal_phases.copy(),
@@ -232,7 +207,6 @@ class TrafficSignalEnv:
         )
     
     def state(self) -> Dict[str, Any]:
-        """Return current environment state"""
         return {
             "step": self.current_step,
             "vehicle_counts": self.vehicle_counts,
@@ -243,5 +217,4 @@ class TrafficSignalEnv:
         }
     
     def close(self):
-        """Clean up environment resources"""
         pass
