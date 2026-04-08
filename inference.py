@@ -4,9 +4,9 @@ from openai import OpenAI
 from traffic_env import TrafficSignalEnv, DisruptionWrapper
 from traffic_env.graders import get_grader
 
-# Environment variables with defaults
-API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4.1-mini")
+# Environment variables - no hardcoded defaults
+API_BASE_URL = os.getenv("API_BASE_URL")
+MODEL_NAME = os.getenv("MODEL_NAME")
 HF_TOKEN = os.getenv("HF_TOKEN")
 
 if HF_TOKEN is None:
@@ -146,19 +146,14 @@ def run_task(task: str) -> dict:
     return {"task": task, "score": final_score, "steps": step, "success": success}
 
 
-from flask import Flask
-
-app = Flask(__name__)
-
-@app.route("/")
-def home():
+if __name__ == "__main__":
     results = []
     for task in TASKS:
         result = run_task(task)
         results.append(result)
 
     avg_score = sum(r["score"] for r in results) / len(results)
-    return f"Traffic Model Running 🚀 Avg Score: {avg_score:.3f}"
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=7860)
+    print(f"\nBaseline Results:")
+    for r in results:
+        print(f"  {r['task']}: score={r['score']:.3f} success={r['success']}")
+    print(f"  Average score: {avg_score:.3f}")
