@@ -1,6 +1,9 @@
 import os
 import sys
 import json
+import warnings
+warnings.filterwarnings("ignore")
+
 from openai import OpenAI
 from traffic_env import TrafficSignalEnv, DisruptionWrapper
 from traffic_env.graders import get_grader
@@ -9,9 +12,6 @@ from traffic_env.graders import get_grader
 API_BASE_URL = os.getenv("API_BASE_URL")
 MODEL_NAME = os.getenv("MODEL_NAME")
 HF_TOKEN = os.getenv("HF_TOKEN")
-
-if HF_TOKEN is None:
-    print("WARNING: No API key, running in fallback mode")
 
 client = None
 if HF_TOKEN:
@@ -153,13 +153,5 @@ def run_task(task: str) -> dict:
 
 
 if __name__ == "__main__":
-    results = []
     for task in TASKS:
-        result = run_task(task)
-        results.append(result)
-
-    avg_score = sum(r["score"] for r in results) / len(results)
-    print(f"\nBaseline Results:")
-    for r in results:
-        print(f"  {r['task']}: score={r['score']:.3f} success={r['success']}")
-    print(f"  Average score: {avg_score:.3f}")
+        run_task(task)
