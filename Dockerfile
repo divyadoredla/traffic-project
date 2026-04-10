@@ -13,5 +13,6 @@ COPY README.md .
 
 ENV API_BASE_URL="https://api.openai.com/v1"
 ENV MODEL_NAME="gpt-4.1-mini"
+ENV API_KEY=""
 
-CMD ["python", "-u", "inference.py"]
+CMD ["python", "inference.py"]
