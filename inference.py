@@ -15,12 +15,12 @@ HF_TOKEN = os.getenv("HF_TOKEN")
 client = None
 if HF_TOKEN:
     try:
-        client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
+        client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN, timeout=5.0)
     except Exception:
         client = None
 
 TASKS = ["basic_intersection", "multi_intersection", "city_network"]
-MAX_STEPS = 30
+MAX_STEPS = 10
 
 
 def parse_action(response_text: str, signal_phases: dict) -> dict:
@@ -65,7 +65,8 @@ def run_task(task: str) -> dict:
                     model=MODEL_NAME,
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0.2,
-                    max_tokens=100
+                    max_tokens=50,
+                    timeout=5
                 )
                 action = parse_action(response.choices[0].message.content, signal_phases)
             except Exception:
