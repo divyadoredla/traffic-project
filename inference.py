@@ -19,7 +19,7 @@ MAX_STEPS = 20
 
 def get_client():
     api_base = os.environ.get("API_BASE_URL", "https://api.openai.com/v1")
-    api_key = os.environ.get("API_KEY", "") or os.environ.get("HF_TOKEN", "placeholder")
+    api_key = os.environ.get("API_KEY", "placeholder")
     return OpenAI(base_url=api_base, api_key=api_key, timeout=25.0)
 
 
