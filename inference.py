@@ -67,11 +67,13 @@ def run_task(task: str) -> dict:
 
 
 if __name__ == "__main__":
-    import time
+    import sys
     try:
         for task in TASKS:
-            run_task(task)
-    except Exception:
-        print("END: success=false", flush=True)
-    while True:
-        time.sleep(60)
+            result = run_task(task)
+            print(f"RESULT: {result}", flush=True)
+        print("ALL TASKS DONE", flush=True)
+        sys.exit(0)
+    except Exception as e:
+        print(f"END: success=false error={e}", flush=True)
+        sys.exit(1)
