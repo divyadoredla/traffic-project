@@ -20,7 +20,7 @@ MAX_STEPS = 20
 def get_client():
     api_base = os.environ.get("API_BASE_URL", "https://api.openai.com/v1")
     api_key = os.environ.get("API_KEY", "placeholder")
-    return OpenAI(base_url=api_base, api_key=api_key, timeout=25.0)
+    return OpenAI(base_url=api_base, api_key=api_key, timeout=8.0)
 
 
 def get_llm_action(signal_phases: dict) -> dict:
@@ -28,29 +28,25 @@ def get_llm_action(signal_phases: dict) -> dict:
     model = os.environ.get("MODEL_NAME", "gpt-4.1-mini")
     keys = list(signal_phases.keys())
     prompt = (
-        f"You are a traffic signal controller.\n"
-        f"Intersections: {keys}\n"
-        "Return ONLY a JSON object assigning phase 0-3 to each intersection.\n"
-        f"Example: {json.dumps({k: 0 for k in keys})}\nOnly JSON."
+        f"Traffic signal controller. Intersections: {keys}. "
+        f"Return ONLY JSON assigning phase 0-3. Example: {json.dumps({k: 0 for k in keys})}"
     )
-    for _ in range(2):
-        try:
-            resp = get_client().chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=80,
-            )
-            text = resp.choices[0].message.content.strip()
-            start = text.find("{")
-            end = text.rfind("}") + 1
-            if start != -1 and end > start:
-                parsed = json.loads(text[start:end])
-                result = {k: int(v) % 4 for k, v in parsed.items() if k in signal_phases}
-                if result:
-                    return result
-        except Exception:
-            continue
-    # Safe fallback — always a valid dict
+    try:
+        resp = get_client().chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=50,
+        )
+        text = resp.choices[0].message.content.strip()
+        start = text.find("{")
+        end = text.rfind("}") + 1
+        if start != -1 and end > start:
+            parsed = json.loads(text[start:end])
+            result = {k: int(v) % 4 for k, v in parsed.items() if k in signal_phases}
+            if result:
+                return result
+    except Exception:
+        pass
     return {k: 0 for k in signal_phases}
 
 
@@ -81,7 +77,6 @@ def run_task(task: str):
             print(f"[STEP] step={step} reward={reward_val:.2f}", flush=True)
         except Exception:
             print(f"[STEP] step={step} reward=0.00", flush=True)
-            break
 
     try:
         wrapped.close()
