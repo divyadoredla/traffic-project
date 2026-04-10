@@ -37,7 +37,7 @@ def parse_action(response_text: str, signal_phases: dict) -> dict:
 
 
 def run_task(task: str) -> dict:
-    print(f"START: {task}", flush=True)
+    print(f"[START] task={task}", flush=True)
 
     env = TrafficSignalEnv(task=task, max_steps=MAX_STEPS)
     wrapped = DisruptionWrapper(env)
@@ -55,14 +55,14 @@ def run_task(task: str) -> dict:
         obs, reward, done, info = wrapped.step(action)
         grader.add_step(reward, info)
         rewards.append(reward.value)
-        print(f"STEP: step={step} reward={reward.value:.2f}", flush=True)
+        print(f"[STEP] step={step} reward={reward.value:.2f}", flush=True)
         if done:
             break
 
     wrapped.close()
     final_score = grader.grade()
     success = final_score >= 0.5
-    print(f"END: success={str(success).lower()} steps={step}", flush=True)
+    print(f"[END] task={task} score={final_score:.3f} steps={step}", flush=True)
     return {"task": task, "score": final_score, "steps": step, "success": success}
 
 

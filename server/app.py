@@ -26,7 +26,7 @@ def health():
 @app.post("/reset")
 def reset(body: dict = None):
     task = (body or {}).get("task", TASKS[0])
-    print(f"START: {task}", flush=True)
+    print(f"[START] task={task}", flush=True)
 
     env = TrafficSignalEnv(task=task, max_steps=MAX_STEPS)
     wrapped = DisruptionWrapper(env)
@@ -69,12 +69,12 @@ def step(body: dict):
     step_num = steps[task]
     last_obs[task] = obs
 
-    print(f"STEP: step={step_num} reward={reward.value:.2f}", flush=True)
+    print(f"[STEP] step={step_num} reward={reward.value:.2f}", flush=True)
 
     if done:
         score = graders[task].grade()
         success = score >= 0.5
-        print(f"END: success={str(success).lower()} steps={step_num}", flush=True)
+        print(f"[END] task={task} score={score:.3f} steps={step_num}", flush=True)
 
     return JSONResponse({
         "observation": {
